@@ -19,7 +19,7 @@ public class PdfSignerFactory {
         }
     }
 
-    public PdfSigner getSigner(SigningProviderType type) {
+    public PdfSigner getPdfSigner(SigningProviderType type) {
         if (type == null) {
             throw new IllegalArgumentException("Signer type must not be null");
         }

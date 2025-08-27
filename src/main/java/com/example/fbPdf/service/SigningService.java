@@ -16,7 +16,7 @@ public class SigningService {
     private final PdfSignerFactory pdfSignerFactory;
 
     public byte[] signPdf(InputStream inputPdf, SigningProviderType signingProviderType) throws Exception {
-        PdfSigner pdfSigner = pdfSignerFactory.getSigner(signingProviderType);
+        PdfSigner pdfSigner = pdfSignerFactory.getPdfSigner(signingProviderType);
         return pdfSigner.sign(inputPdf);
     }
 }

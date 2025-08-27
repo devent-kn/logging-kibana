@@ -19,10 +19,8 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.*;
-import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
-import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -67,39 +65,25 @@ public class CloudCaSigner implements PdfSigner {
             }
             byte[] pdfHash = digest.digest();
 
-            // 2. Build signed attributes (giống iText)
+            // Build signed attributes (giống iText)
             ASN1EncodableVector signedAttrs = new ASN1EncodableVector();
-
             // messageDigest
-            signedAttrs.add(new Attribute(
-                    CMSAttributes.messageDigest,
-                    new DERSet(new DEROctetString(pdfHash))
-            ));
-
+            signedAttrs.add(new Attribute(CMSAttributes.messageDigest, new DERSet(new DEROctetString(pdfHash))));
             // contentType = data
-            signedAttrs.add(new Attribute(
-                    CMSAttributes.contentType,
-                    new DERSet(PKCSObjectIdentifiers.data)
-            ));
-
+            signedAttrs.add(new Attribute(CMSAttributes.contentType, new DERSet(PKCSObjectIdentifiers.data)));
             // signingTime
-            signedAttrs.add(new Attribute(
-                    CMSAttributes.signingTime,
-                    new DERSet(new Time(new Date()))
-            ));
-
+            signedAttrs.add(new Attribute(CMSAttributes.signingTime, new DERSet(new Time(new Date()))));
             // encode attributes
             DERSet signedAttrSet = new DERSet(signedAttrs);
             byte[] encodedSignedAttrs = new DERSequence(signedAttrSet).getEncoded("DER");
 
-            // 3. Hash attributes rồi nhờ CA/HSM ký
+            // Hash attributes mock rồi nhờ CA/HSM ký
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
             byte[] attrHash = sha256.digest(encodedSignedAttrs);
-
             byte[] signatureValue = mockExternalSignatureProvider.signHash(attrHash, "SHA256withRSA");
             Certificate[] chain = mockExternalSignatureProvider.getCertificateChain();
 
-            // 4. Build ContentSigner giả (trả chữ ký có sẵn)
+            // Build ContentSigner giả (trả chữ ký có sẵn)
             ContentSigner precomputed = new ContentSigner() {
                 @Override
                 public AlgorithmIdentifier getAlgorithmIdentifier() {
@@ -111,14 +95,14 @@ public class CloudCaSigner implements PdfSigner {
                 public byte[] getSignature() { return signatureValue; }
             };
 
-            // 5. SignerInfo với signed attributes
+            // SignerInfo với signed attributes
             X509CertificateHolder certHolder = new X509CertificateHolder(chain[0].getEncoded());
             SignerInfoGeneratorBuilder builder = new SignerInfoGeneratorBuilder(new BcDigestCalculatorProvider());
             builder.setSignedAttributeGenerator(new DefaultSignedAttributeTableGenerator(new AttributeTable(signedAttrs)));
 
             SignerInfoGenerator signerInfoGen = builder.build(precomputed, certHolder);
 
-            // 6. Tạo CMS detached
+            // Tạo CMS detached
             CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
             gen.addSignerInfoGenerator(signerInfoGen);
             gen.addCertificates(new JcaCertStore(Arrays.asList(chain)));
@@ -126,7 +110,7 @@ public class CloudCaSigner implements PdfSigner {
             CMSSignedData signedData = gen.generate(new CMSAbsentContent(), false);
             byte[] cmsSignature = signedData.getEncoded();
 
-            // 7. Chèn chữ ký vào PDF
+            // Chèn chữ ký vào PDF
             externalSigningSupport.setSignature(cmsSignature);
             return baos.toByteArray();
         }

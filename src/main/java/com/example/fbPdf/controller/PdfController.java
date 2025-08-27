@@ -12,9 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.Arrays;
 
 @Slf4j
 @RestController
@@ -59,18 +57,6 @@ public class PdfController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
-
-//    @GetMapping("/sign")
-//    public ResponseEntity<byte[]> signPdf(Miltipart) throws Exception {
-//        byte[] pdf = pdfService.createStyledPdf();
-//        log.info("pdf byte: " + Arrays.toString(pdf));
-//        byte[] signed = signingService.signPdf(pdf);
-//        log.info("signed byte: " + Arrays.toString(signed));
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=signed.pdf")
-//                .contentType(MediaType.APPLICATION_PDF)
-//                .body(signed);
-//    }
 
     @PostMapping("/sign")
     public ResponseEntity<byte[]> signPdf(
